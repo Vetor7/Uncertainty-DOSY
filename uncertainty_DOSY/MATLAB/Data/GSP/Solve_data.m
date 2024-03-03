@@ -18,7 +18,7 @@ b = g2*1e-10;
 DOSYData = real(DOSYData);
 DOSYData = DOSYData / max(DOSYData(:));
 
-idx_peaks = find(DOSYData(1, :) >= 0.028);
+idx_peaks = find(DOSYData(1, :) >= 0.03);
 ppm = cs;
 
 S = DOSYData(:, idx_peaks);

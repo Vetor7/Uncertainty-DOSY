@@ -23,7 +23,7 @@ ppm = cs;
 
 S = DOSYData(:, idx_peaks);
 % 设置所需的信噪比（单位：分质数 dB）
-desired_SNR_dB = 30; % 例如 20 dB
+desired_SNR_dB = 100; % 例如 20 dB
 
 % 计算原始信号 S 的功率
 signal_power = var(S(:));

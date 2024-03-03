@@ -1,234 +1,164 @@
 import os
 import torch
 import numpy as np
-from scipy import interpolate
-
 from tqdm import trange
-from sklearn.model_selection import train_test_split as train_val
-
+from sklearn.model_selection import train_test_split
 import config
 
-np.random.seed(42)
+np.random.seed(42)  # Ensure reproducibility
 
 
-def load_dataloader(batch_size, num_D):
-    print("Begin to generate simulation signals")
+def load_dataloader(batch_size):
+    """Generates dataloaders for training and validation datasets."""
+    print("Generating simulation signals")
 
-    DOSY_signal = gen_signal_dosy(num_D=num_D)
+    DOSY_signal = gen_signal_dosy()
+    clean_signals, labels = DOSY_signal.gen_signal_2D()
 
-    clean_signals, label = DOSY_signal.gen_signal_2D()
+    # Split data into training and validation sets
+    train_input, val_input, train_label, val_label = train_test_split(
+        clean_signals, labels, test_size=config.ratio, random_state=42)
 
-    train_input, val_input, train_label, val_label = train_val(clean_signals, label,
-                                                               test_size=config.ratio, random_state=42)
+    # Convert to PyTorch tensors
+    train_input, val_input = map(lambda x: torch.from_numpy(x).float(), (train_input, val_input))
+    train_label, val_label = map(lambda x: torch.from_numpy(x).float(), (train_label, val_label))
 
-    train_input = torch.from_numpy(train_input).float()
-    val_input = torch.from_numpy(val_input).float()
-    train_label = torch.from_numpy(train_label).float()
-    val_label = torch.from_numpy(val_label).float()
-    # train_DF = torch.from_numpy(train_DF).float()
-    # val_DF = torch.from_numpy(val_DF).float()
-    # train_k = torch.from_numpy(train_k).float()
-    # val_k = torch.from_numpy(val_k).float()
+    # Save datasets to files if configured
+    if config.save_Dataset:
+        output_dir = "./Dataset/"
+        os.makedirs(output_dir, exist_ok=True)
+        for name, data in zip(["train_input", "val_input", "train_label", "val_label"],
+                              [train_input, val_input, train_label, val_label]):
+            np.save(os.path.join(output_dir, name), data.numpy())
 
-    if config.save_Dataset == True:
-        output_dir_dataset = "./Dataset/"
-        np.save(os.path.join(output_dir_dataset, "train_input"), train_input)
-        np.save(os.path.join(output_dir_dataset, "val_input"), val_input)
-        np.save(os.path.join(output_dir_dataset, "train_label"), train_label)
-        np.save(os.path.join(output_dir_dataset, "val_label"), val_label)
-        # np.save(os.path.join(output_dir_dataset, "train_DF"), train_DF)
-        # np.save(os.path.join(output_dir_dataset, "val_DF"), val_DF)
-        # np.save(os.path.join(output_dir_dataset, "train_k"), train_k)
-        # np.save(os.path.join(output_dir_dataset, "val_k"), val_k)
+    # Create dataloaders
+    train_loader = torch.utils.data.DataLoader(
+        torch.utils.data.TensorDataset(train_input, train_label),
+        batch_size=batch_size, shuffle=True)
 
-    train_dataset = torch.utils.data.TensorDataset(train_input, train_label)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=0,
-                                               persistent_workers=False, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(
+        torch.utils.data.TensorDataset(val_input, val_label),
+        batch_size=batch_size, shuffle=False)
 
-    val_dataset = torch.utils.data.TensorDataset(val_input, val_label)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=0,
-                                             persistent_workers=False, shuffle=False)
-
-    print('successfully load dataloader')
-
+    print('Dataloader loaded successfully.')
     return train_loader, val_loader
 
 
 def load_dataloader_exist(batch_size):
-    print("Begin to generate simulation signals")
+    """Loads existing dataloaders from saved datasets."""
+    print("Loading existing simulation signals")
 
-    train_input = np.load("./Dataset/train_input.npy")
-    train_label = np.load("./Dataset/train_label.npy")
-    val_input = np.load("./Dataset/val_input.npy")
-    val_label = np.load("./Dataset/val_label.npy")
-    # train_k = np.load("./Dataset/train_k.npy")
-    # train_DF = np.load("./Dataset/train_DF.npy")
-    # val_k = np.load("./Dataset/val_k.npy")
-    # val_DF = np.load("./Dataset/val_DF.npy")
+    # Load datasets
+    train_input, train_label, val_input, val_label = [
+        torch.from_numpy(np.load(f"./Dataset/{name}.npy")).float()
+        for name in ["train_input", "train_label", "val_input", "val_label"]
+    ]
 
-    train_input = torch.from_numpy(train_input).float()
-    val_input = torch.from_numpy(val_input).float()
-    train_label = torch.from_numpy(train_label).float()
-    val_label = torch.from_numpy(val_label).float()
-    # train_DF = torch.from_numpy(train_DF).float()
-    # train_k = torch.from_numpy(train_k).float()
-    # val_k = torch.from_numpy(val_k).float()
-    # val_DF = torch.from_numpy(val_DF).float()
+    # Create dataloaders
+    train_loader = torch.utils.data.DataLoader(
+        torch.utils.data.TensorDataset(train_input, train_label),
+        batch_size=batch_size, shuffle=True)
 
-    train_dataset = torch.utils.data.TensorDataset(train_input, train_label)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=0,
-                                               persistent_workers=False, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(
+        torch.utils.data.TensorDataset(val_input, val_label),
+        batch_size=batch_size, shuffle=False)
 
-    val_dataset = torch.utils.data.TensorDataset(val_input, val_label)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, num_workers=0,
-                                             persistent_workers=False, shuffle=False)
-
-    print('successfully load dataloader')
-
+    print('Existing dataloader loaded successfully.')
     return train_loader, val_loader
 
 
 class gen_signal_dosy():
-    def __init__(self, max_D=config.max_D, label_size=config.label_size, min_sep=config.min_sep, num_D=config.num_D
-                 , max_b=config.max_b, signal_dim=config.signal_dim, dB=config.dB, sig_lorz=config.sig_lorz,
-                 max_fre=config.max_fre, n_fre=config.n_fre, num_samples=config.num_samples, sig=config.sig):
-        self.max_D = max_D
-        self.label_size = label_size
-        self.min_sep = min_sep
-        self.num_D = num_D
-        self.max_b = max_b
-        self.signal_dim = signal_dim
-        self.dB = dB
-        self.sig_lorz = sig_lorz
-        self.max_fre = max_fre
-        self.n_fre = n_fre
-        self.num_samples = num_samples
-        self.sig = sig
-        self.set_dim = 30
+    def __init__(self, **kwargs):
+        # Initialize parameters with defaults from config or provided keyword arguments
+        self.__dict__.update({k: getattr(config, k) for k in dir(config) if not k.startswith("__")})
+        self.__dict__.update(kwargs)
 
     def gen_signal_2D(self):
-        S = np.zeros([self.num_samples, self.set_dim, self.n_fre])
+        S = np.zeros([self.num_samples, self.signal_dim, self.n_fre])
         label = np.zeros([self.num_samples, self.label_size, self.n_fre])
-        DF = np.zeros([self.num_samples, self.label_size, self.num_D])
-        Ci_f = np.zeros([self.num_samples, self.num_D, self.n_fre])
-        S_kernel = np.zeros([self.num_samples, self.signal_dim, self.label_size])
+
         for i in trange(self.num_samples):
-            Ci_f[i] = self.get_Ci_f()
+            Ci_f = self.get_Ci_f()
             D = self.get_D()
-            DF[i] = self.get_DF(D, self.sig)
-            label[i] = self.get_label(DF[i], Ci_f[i])
-            label[i] = label[i] / (np.sum(label[i], -2)[np.newaxis, :])
-            S_kernel[i] = self.get_Skernel()
-            S[i] = self.get_signal(S_kernel[i], label[i])
+            DF = self.get_DF(D, self.sig)
+            label[i] = self.normalize_label(self.get_label(DF, Ci_f))
+            S_kernel = self.get_Skernel()
+            S[i] = self.get_signal(S_kernel, label[i])
 
-        S = S.swapaxes(1, 2)
-        label = label.swapaxes(1, 2)
-        noise_S = self.get_noise_S(S)
-        # new_noise_S, new_S, S_kernel = self.data_cut(noise_S, S)
-
+        noise_S = self.get_noise_S(S.swapaxes(1, 2))
+        label = label.swapaxes(1, 2) * config.mul_label
         return noise_S.astype('float32'), label.astype('float32')
 
-    def get_DF(self, D, Sigma):  # D(3,1)
-        D = D.reshape(self.num_D, 1)
+    def normalize_label(self, label):
+        """Normalize label intensities."""
+        return label / np.sum(label, axis=-2, keepdims=True)
+
+    def get_DF(self, D, Sigma):
+        """Compute diffusion factors based on Gaussian distribution around D with spread Sigma."""
         d = np.linspace(0, self.max_D, self.label_size)
-        sqrt_2pi = np.power(2 * np.pi, 0.5)
+        D = D[:, np.newaxis]  # Ensure D is a column vector for broadcasting
+        sqrt_2pi = np.sqrt(2 * np.pi)
         coef = 1 / (sqrt_2pi * Sigma)
-        powercoef = -1 / (2 * np.power(Sigma, 2))
-        mypow = powercoef * (np.power((d - D), 2))
-        DF = coef * (np.exp(mypow))
-        DF = DF / np.tile(np.max(DF, axis=1)[:, np.newaxis], [1, self.label_size])
+        powercoef = -1 / (2 * Sigma ** 2)
+        DF = coef * np.exp(powercoef * (d - D) ** 2)
+        DF = DF / DF.max(axis=1, keepdims=True)
 
         return DF.T
 
     def get_D(self):
-        while True:  # TODO
-            D_value = (np.random.random(self.num_D) * self.max_D) + config.base_D
-            D_value = np.sort(D_value)
-            D_value_t = np.roll(D_value, 1)
-            if np.min(np.abs(D_value - D_value_t)) > self.min_sep:
-                break
-
-        return D_value
+        """Generate unique diffusion coefficients with minimum separation."""
+        while True:
+            D = np.sort(np.random.rand(self.num_D) * self.max_D + config.base_D)
+            if np.all(np.diff(D) > self.min_sep):
+                return D
 
     def get_label(self, DF, Ci_f):
-        label = np.matmul(DF, Ci_f)
-        return label
+        """Calculate label intensities based on diffusion factors and concentration profiles."""
+        return np.matmul(DF, Ci_f)
 
     def get_Skernel(self):
+        """Generate signal kernel based on exponential decay model."""
         D_lab = np.linspace(0, self.max_D, self.label_size)
+        b = np.linspace(0, self.max_b, self.signal_dim)
+        return np.exp(-b[:, None] * D_lab)
 
-        max_b = self.max_b
-
-        b = np.linspace(0, max_b, self.set_dim)
-        S_kernel = np.exp(-b.reshape(self.set_dim, 1) * D_lab)
-
-        return S_kernel
-
-    def get_signal(self, S_k, label):
-        signal = np.matmul(S_k, label)
-        return signal
+    def get_signal(self, S_kernel, label):
+        """Generate simulated signal by applying kernel to labels."""
+        return np.matmul(S_kernel, label)
 
     def get_noise_S(self, S):
         snr = np.exp(np.log(10) * float(self.dB) / 10)
-        num_samples, n_fre, signal_dim = np.shape(S)
-        noise_S = np.zeros([num_samples, n_fre, signal_dim])
+        noise_S = np.zeros([self.num_samples, self.n_fre, self.signal_dim])
         sigma = np.sqrt(1. / snr)
 
-        for i in trange(num_samples):
-            noise = np.random.randn(n_fre, signal_dim)
+        for i in trange(self.num_samples):
+            noise = np.random.randn(self.n_fre, self.signal_dim)
             mult = sigma * np.linalg.norm(S[i, :, :], 2) / (np.linalg.norm(noise, 2))
             noise = noise * mult
+
             noise_S[i, :, :] = S[i, :, :] + noise
         return noise_S
 
     def get_Ci_f(self):
-        Ci_f = np.zeros([self.num_D, self.n_fre])
-        num_fre = np.zeros([self.num_D, 1])
-        while (np.sum(num_fre, 0) < 18 or np.sum(num_fre, 0) > 22):
-            num_fre = np.random.randint(0, 10, (self.num_D, 1))
+        Ci_f = np.zeros((self.num_D, self.n_fre))
+        while True:
+            num_fre = np.random.randint(0, 10, self.num_D)
+            total_num_fre = np.sum(num_fre)
+            if total_num_fre == 20:
+                break
 
-        for i in np.arange(self.num_D):
-            fre = np.tile(np.random.random([int(num_fre[i, 0]), 1]) * self.max_fre, [1, self.n_fre])
-            chemical_shift = np.tile(np.linspace(0, self.max_fre, self.n_fre), [int(num_fre[i, 0]), 1])
-            lorz = self.sig_lorz ** 2 / ((chemical_shift - fre) ** 2 + self.sig_lorz ** 2).reshape(int(num_fre[i, 0]),
-                                                                                                   self.n_fre)
-            lorz = lorz / (np.max(lorz, axis=1).reshape([int(num_fre[i, 0]), 1]))
-            Ci_f[i] = np.sum(lorz, 0)
+        chemical_shift = np.linspace(0, self.max_fre, self.n_fre)
+
+        for i in range(self.num_D):
+            if num_fre[i] == 0:  # Skip if no frequencies for this diffusion coefficient
+                continue
+            fre = np.random.rand(num_fre[i]) * self.max_fre
+            lorz = self.sig_lorz ** 2 / ((chemical_shift[:, np.newaxis] - fre[np.newaxis, :]) ** 2 + self.sig_lorz ** 2)
+            lorz_normalized = lorz / lorz.max(axis=0)
+            Ci_f[i] = lorz_normalized.sum(axis=1)
+
         return Ci_f
-
-    def data_cut(self, noise_S, pure_s):
-        b = np.linspace(0, self.max_b, self.set_dim)
-        new_b = np.zeros(self.num_samples)
-        new_bx = np.zeros([self.signal_dim])
-        S_kernel = np.zeros([self.num_samples, self.signal_dim, self.label_size])
-        D_lab = np.linspace(0, self.max_D, self.label_size)
-        new_noise_S = np.zeros([self.num_samples, self.n_fre, self.signal_dim])
-        new_pure_s = np.zeros([self.num_samples, self.n_fre, self.signal_dim])
-
-        for i in trange(self.num_samples):
-            noise_S[i, :, :] = noise_S[i, :, :] / (noise_S[i, :, 0][:, np.newaxis])  # 归一化
-            for b_idx in np.arange(self.set_dim):
-                if b_idx == self.set_dim - 1:
-                    new_bx = np.linspace(0, self.max_b, self.signal_dim)
-                    F = interpolate.interp1d(b, noise_S[i], fill_value='extrapolate')
-                    f = interpolate.interp1d(b, pure_s[i], fill_value='extrapolate')
-                    new_noise_S[i, :self.n_fre, :] = F(new_bx)
-                    new_pure_s[i, :self.n_fre, :] = f(new_bx)
-
-                elif np.min(noise_S[i, :, b_idx]) < 0.05:
-                    Scat = noise_S[i, :, 0:b_idx]  # 截断
-                    scat = pure_s[i, :, 0:b_idx]
-                    new_b[i] = b[b_idx - 1]
-                    new_bx = np.linspace(0, new_b[i], self.signal_dim)
-                    F = interpolate.interp1d(b[0:b_idx], Scat[:, :], fill_value='extrapolate')
-                    f = interpolate.interp1d(b[0:b_idx], scat[:, :], fill_value='extrapolate')
-                    new_noise_S[i, :self.n_fre, :] = F(new_bx)
-                    new_pure_s[i, :self.n_fre, :] = f(new_bx)
-                    break
-
-            S_kernel[i, :, :] = np.exp(-new_bx.reshape(self.signal_dim, 1) * D_lab)
-        return new_noise_S, new_pure_s, S_kernel
 
 
 if __name__ == '__main__':
-    load_dataloader(config.batch_size, config.num_D)
+    load_dataloader(config.batch_size)

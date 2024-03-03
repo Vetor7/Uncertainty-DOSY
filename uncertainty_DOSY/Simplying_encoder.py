@@ -4,102 +4,30 @@ from typing import Optional, Tuple, Union
 import math
 
 
-class RMSNorm(nn.Module):
-    def __init__(self, d, eps=1e-6):
-        """
-        Root Mean Square Layer Normalization, from https://github.com/bzhangGo/rmsnorm
-        :param d: model size
-        :param eps:  epsilon value, default 1e-8
-        """
-        super(RMSNorm, self).__init__()
-
-        self.eps = eps
-        self.d = d
-
-        self.scale = nn.Parameter(torch.ones(d))
-        self.register_parameter("scale", self.scale)
-
-    def forward(self, x):
-        norm_x = x.norm(2, dim=-1, keepdim=True)
-        rms_x = norm_x * self.d ** (-1.0 / 2)
-        x_normed = x / (rms_x + self.eps)
-
-        return self.scale * x_normed
-
-
 class Simply_encode(nn.Module):
-    """
-    """
-
-    def __init__(self, hidden_size, num_attention_heads, Dropout, norm_type="ln", norm_position="pre",
-                 parallel_layers=True, layer_idx=0):
+    def __init__(self, hidden_size, num_attention_heads, Dropout, mult_h=20, norm_type="ln", layer_idx=0):
         super().__init__()
 
-        inner_dim = 20 * hidden_size
-        self.parallel_layers = parallel_layers
+        inner_dim = mult_h * hidden_size
         self.layer_idx = layer_idx
 
-        if norm_type == "ln":
-            self.ln_1 = nn.LayerNorm(hidden_size, 1e-6)
-            self.ln_2 = nn.LayerNorm(hidden_size, 1e-8)
-        elif norm_type == "rmsnorm":
-            self.ln_1 = RMSNorm(hidden_size)
-            self.ln_2 = RMSNorm(hidden_size)
-        elif norm_type == "none":
-            # always use LN in first layer to normalise input activation norms.
-            self.ln_1 = (
-                nn.Identity()
-                if layer_idx > 0
-                else nn.LayerNorm(hidden_size, 1e-6)
-            )
-            self.ln_2 = nn.Identity()
-        else:
-            raise NotImplementedError
-
-        self.norm_position = norm_position
-
+        norm_layer = {
+            "ln": lambda: nn.LayerNorm(hidden_size, eps=1e-6),
+            "none": lambda: nn.Identity() if layer_idx > 0 else nn.LayerNorm(hidden_size, eps=1e-6)
+        }.get(norm_type, lambda: None)()
+        self.ln_1 = norm_layer
         self.attn = Simplify_Attention(hidden_size, num_attention_heads, Dropout, layer_idx=layer_idx)
-
         self.mlp = MLP(inner_dim, hidden_size, Dropout)
+        self.attn_block_resid_gain = nn.Parameter(torch.ones(1), requires_grad=True)
+        self.mlp_block_resid_gain = nn.Parameter(torch.full((1,), 0.1), requires_grad=True)
 
-        self.attn_block_resid_gain = nn.Parameter(
-            torch.Tensor([1]),
-            requires_grad=True,
-        )
-
-        self.mlp_block_resid_gain = nn.Parameter(
-            torch.Tensor([0.1]),
-            requires_grad=True,
-        )
-
-    def forward(
-            self,
-            hidden_states: Optional[Tuple[torch.FloatTensor]],
-            attention_mask: Optional[torch.FloatTensor] = None,
-            head_mask: Optional[torch.FloatTensor] = None,
-    ) -> Union[
-        Tuple[torch.Tensor],
-        Optional[Tuple[torch.Tensor, Tuple[torch.FloatTensor, ...]]],
-    ]:
-
-        if self.norm_position == "pre":
-            hidden_states = self.ln_1(hidden_states)
-
-        attn_outputs = self.attn(
-            hidden_states,
-            attention_mask=attention_mask,
-            head_mask=head_mask,
-        )
-        attn_output = attn_outputs
-
-        if self.parallel_layers:
-            feed_forward_hidden_states = self.mlp(hidden_states)
-            outputs = (
-                    self.mlp_block_resid_gain * feed_forward_hidden_states
-                    + self.attn_block_resid_gain * attn_output
-            )
+    def forward(self, hidden_states: torch.FloatTensor, attention_mask: Optional[torch.FloatTensor] = None,
+                head_mask: Optional[torch.FloatTensor] = None) -> torch.Tensor:
+        hidden_states = self.ln_1(hidden_states)
+        attn_outputs = self.attn(hidden_states, attention_mask=attention_mask, head_mask=head_mask)
+        feed_forward_hidden_states = self.mlp(hidden_states)
+        outputs = self.mlp_block_resid_gain * feed_forward_hidden_states + self.attn_block_resid_gain * attn_outputs
         return outputs
-
 
 class MLP(nn.Module):
     def __init__(self, intermediate_size, hidden_size, Dropout=0):
@@ -171,13 +99,8 @@ class MyConv1D(nn.Module):
         elif skip_gain is not None:
             # Reparameterised linear layer
             assert nx == nf
-            self.resid_gain = nn.Parameter(
-                torch.Tensor([resid_gain]), requires_grad=trainable_gains
-            )
-            self.skip_gain = nn.Parameter(
-                torch.Tensor([skip_gain]),
-                requires_grad=trainable_gains,
-            )
+            self.resid_gain = nn.Parameter(torch.Tensor([resid_gain]), requires_grad=trainable_gains)
+            self.skip_gain = nn.Parameter(torch.Tensor([skip_gain]),requires_grad=trainable_gains)
 
             self.weight = nn.Parameter(torch.zeros(nx, nx))
             if init_type == "orth":
@@ -234,7 +157,7 @@ class LeakyReLU(nn.Module):
 
 class Simplify_Attention(nn.Module):
     def __init__(self, hidden_size, num_attention_heads, Dropout, is_cross_attention=False, layer_idx=None,
-                 max_positions=2500):
+                 max_positions=3000):
         super().__init__()
         assert is_cross_attention == False
 
@@ -248,22 +171,17 @@ class Simplify_Attention(nn.Module):
                 f" {self.num_heads})."
             )
 
-        self.scale_attn_by_inverse_layer_idx = False
         self.layer_idx = layer_idx
-
         self.qk_attn = MyConv1D(
             2 * self.embed_dim,
             self.embed_dim,
         )
-
         self.c_proj = nn.Identity()
         self.split_size = self.embed_dim
         query_weight, key_weight = self.qk_attn.weight.data.split(
             self.split_size, dim=1
         )
-
         query_weight.normal_(mean=0.0, std=0)
-
         self.attn_dropout = nn.Dropout(Dropout)
         self.resid_dropout = nn.Dropout(Dropout)
 
@@ -275,23 +193,17 @@ class Simplify_Attention(nn.Module):
             torch.ones((1, self.num_heads, 1, 1)),
             requires_grad=True,
         )
-
         self.centre_attn_gain = True
         self.centre_attn_gain = nn.Parameter(
             torch.ones((1, self.num_heads, 1, 1)),
             requires_grad=True
         )
 
-        if layer_idx == 0:
-            value_resid_gain = 1
-        else:
-            value_resid_gain = 0
-
-        if (value_resid_gain != 0):
+        if (layer_idx == 0):
             self.v_attn = MyConv1D(
                 self.embed_dim,
                 self.embed_dim,
-                resid_gain=value_resid_gain,
+                resid_gain=1,
                 skip_gain=1,
                 trainable_gains=True,
                 init_type="id",
@@ -299,9 +211,7 @@ class Simplify_Attention(nn.Module):
             )
         else:
             self.v_attn = nn.Identity()
-
         self.pruned_heads = set()
-
         uniform_causal_attn_mat = torch.ones(
             (max_positions, max_positions), dtype=torch.float32
         ) / torch.arange(1, max_positions + 1).view(-1, 1)
@@ -311,7 +221,6 @@ class Simplify_Attention(nn.Module):
                 uniform_causal_attn_mat,
             ).view(1, 1, max_positions, max_positions),
             persistent=False,
-
         )
         self.register_buffer(
             "diag",
@@ -336,10 +245,6 @@ class Simplify_Attention(nn.Module):
             device=attn_weights.device,
         )
         query_length, key_length = query.size(-2), key.size(-2)
-        # Layer-wise attention scaling
-        if self.scale_attn_by_inverse_layer_idx:
-            attn_weights = attn_weights / float(self.layer_idx + 1)
-
         attn_weights = nn.functional.softmax(attn_weights, dim=-1)
 
         # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
@@ -386,23 +291,16 @@ class Simplify_Attention(nn.Module):
             attention_mask: Optional[torch.FloatTensor] = None,
             head_mask: Optional[torch.FloatTensor] = None,
     ) -> Tuple[Union[torch.Tensor, Tuple[torch.Tensor]], ...]:
-
         (query, key) = self.qk_attn(hidden_states).split(self.split_size, dim=2)
         value = self.v_attn(hidden_states)
-
         query = self._split_heads(query, self.num_heads, self.head_dim)
         key = self._split_heads(key, self.num_heads, self.head_dim)
         value = self._split_heads(value, self.num_heads, self.head_dim)
-
         attn_output, attn_weights = self._attn(
             query, key, value, attention_mask, head_mask
         )
-
         attn_output = self._merge_heads(attn_output, self.num_heads, self.head_dim)
-
         proj_output = self.c_proj(attn_output)
         proj_output = self.resid_dropout(proj_output)
-
         outputs = proj_output
-
         return outputs

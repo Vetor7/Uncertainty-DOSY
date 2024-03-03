@@ -23,8 +23,8 @@ n_fre = 300
 o_fre = 20
 max_fre = 10
 num_D = 3
-dB = 40
-min_sep = 0.8
+dB = 42
+min_sep = 0.7
 num_samples = 30000
 
 ratio = 0.1

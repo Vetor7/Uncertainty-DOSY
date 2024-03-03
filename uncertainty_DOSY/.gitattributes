@@ -1,3 +1,0 @@
-Result/T1T2/last.ckpt filter=lfs diff=lfs merge=lfs -text
-Result/DOSY/last.ckpt filter=lfs diff=lfs merge=lfs -text
-Result/VD/last.ckpt filter=lfs diff=lfs merge=lfs -text

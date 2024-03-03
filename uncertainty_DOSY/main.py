@@ -1,12 +1,10 @@
 import sys
 import argparse
 import pytorch_lightning as pl
-
-
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 
-def alter(file,old_str,new_str):
+def alter(file, old_str, new_str):
     """
     Replace characters in a file
     """
@@ -14,10 +12,10 @@ def alter(file,old_str,new_str):
     with open(file, "r", encoding="utf-8") as f:
         for line in f:
             if old_str in line:
-                line = line.replace(old_str,new_str)
+                line = line.replace(old_str, new_str)
 
             file_data += line
-    with open(file,"w",encoding="utf-8") as f:
+    with open(file, "w", encoding="utf-8") as f:
         f.write(file_data)
 
 
@@ -35,22 +33,28 @@ if __name__ == '__main__':
         sys.exit(1)
     print("Type: {}".format(args.Type))
 
-    alter("config.py", "='T1T2'", "='"+args.Type+"'")
-    alter("config.py", "='VD'", "='"+args.Type+"'")
-    alter("config.py", "='DOSY'", "='"+args.Type+"'")
+    alter("config.py", "='T1T2'", "='" + args.Type + "'")
+    alter("config.py", "='VD'", "='" + args.Type + "'")
+    alter("config.py", "='DOSY'", "='" + args.Type + "'")
 
     import config
     import dataset
-    from model import make_model
+    from model import Transformer
 
     # data
     train_loader, val_loader = dataset.load_dataloader_exist(batch_size=config.batch_size)
 
-    # initial model
-    model = make_model()
+    pretrain_model = Transformer()
+    pretrain_model.var_ones()
+    trainer = pl.Trainer(accelerator='gpu', devices=[int(config.gpu)],
+                         max_epochs=30, callbacks=[ModelCheckpoint(dirpath='Result/' + config.Type + '/',
+                                                                  filename='pretrain-{epoch}')])
+    trainer.fit(pretrain_model, train_loader, val_loader)
+    checkpoint_callback = ModelCheckpoint(dirpath='Result/' + config.Type + '/', monitor='val_loss', save_last=True,
+                                          save_top_k=100)
+    model = Transformer.load_from_checkpoint('Result/' + config.Type + '/'+'pretrain-epoch=29.ckpt')
 
-    checkpoint_callback = ModelCheckpoint(dirpath='Result/' + config.Type + '/', monitor='val_loss', save_last=True, save_top_k=100)
-
-    trainer = pl.Trainer(accelerator='gpu', devices=[int(config.gpu)], max_epochs=config.max_epochs, callbacks=checkpoint_callback)
+    trainer = pl.Trainer(accelerator='gpu', devices=[int(config.gpu)], max_epochs=config.max_epochs,
+                         callbacks=checkpoint_callback)
 
     trainer.fit(model, train_loader, val_loader)
