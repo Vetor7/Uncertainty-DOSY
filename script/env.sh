@@ -9,5 +9,5 @@ conda remove -n DOSY --all -y
 conda create -n DOSY python=3.11 -y
 conda activate DOSY
 
-conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia -y
+conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.8 -c pytorch -c nvidia -y
 pip install -r requirements.txt
