@@ -13,7 +13,7 @@ mul_label = 3
 max_epochs = 100
 
 # dataset
-save_Dataset = True
+save_Dataset = False
 n_fre = 300
 o_fre = 20
 max_fre = 10
