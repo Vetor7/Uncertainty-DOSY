@@ -34,11 +34,11 @@ def load_dataloader(batch_size):
     # Create dataloaders
     train_loader = torch.utils.data.DataLoader(
         torch.utils.data.TensorDataset(train_input, train_label),
-        batch_size=batch_size, shuffle=True)
+        batch_size=batch_size, shuffle=True, num_workers=config.num_works)
 
     val_loader = torch.utils.data.DataLoader(
         torch.utils.data.TensorDataset(val_input, val_label),
-        batch_size=batch_size, shuffle=False)
+        batch_size=batch_size, shuffle=False, num_workers=config.num_works)
 
     print('Dataloader loaded successfully.')
     return train_loader, val_loader
@@ -57,11 +57,11 @@ def load_dataloader_exist(batch_size):
     # Create dataloaders
     train_loader = torch.utils.data.DataLoader(
         torch.utils.data.TensorDataset(train_input, train_label),
-        batch_size=batch_size, shuffle=True)
+        batch_size=batch_size, shuffle=True, num_workers=config.num_works)
 
     val_loader = torch.utils.data.DataLoader(
         torch.utils.data.TensorDataset(val_input, val_label),
-        batch_size=batch_size, shuffle=False)
+        batch_size=batch_size, shuffle=False, num_workers=config.num_works)
 
     print('Existing dataloader loaded successfully.')
     return train_loader, val_loader
@@ -128,18 +128,6 @@ class gen_signal_dosy():
         """Generate simulated signal by applying kernel to labels."""
         return np.matmul(S_kernel, label)
 
-    # def get_noise_S(self, S):
-    #     snr = np.exp(np.log(10) * float(self.dB) / 10)
-    #     noise_S = np.zeros([self.num_samples, self.n_fre, self.signal_dim])
-    #     sigma = np.sqrt(1. / snr)
-    #
-    #     for i in trange(self.num_samples):
-    #         noise = np.random.randn(self.n_fre, self.signal_dim)
-    #         mult = sigma * np.linalg.norm(S[i, :, :], 2) / (np.linalg.norm(noise, 2))
-    #         noise = noise * mult
-    #
-    #         noise_S[i, :, :] = S[i, :, :] + noise
-    #     return noise_S
     def get_noise_S(self, S):
         snr = np.exp(np.log(10) * float(self.dB) / 10)
         noise_S = np.zeros([self.num_samples, self.n_fre, self.signal_dim])

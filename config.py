@@ -6,11 +6,12 @@ dropout = 0.1
 label_size = 140
 lr_scheduler='ReduceLR'
 
-# main
+# train
 gpu = '0'
 batch_size = 48
 mul_label = 3
 max_epochs = 100
+num_works = 16
 
 # dataset
 save_Dataset = False
