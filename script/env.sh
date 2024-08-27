@@ -9,4 +9,6 @@ conda remove -n DOSY --all -y
 conda create -n DOSY python=3.10 -y
 conda activate DOSY
 conda install pytorch==2.0.1 pytorch-cuda=11.8 -c pytorch -c nvidia -y
+pip install --upgrade pip
+pip install cmake lit scikit-learn
 pip install -r requirements.txt
