@@ -52,7 +52,7 @@ def load_data(type):
 
 def result_process(type):
     paraments = {
-    "QGC": (0.025, 0.7, "linear", 0.6, 5),
+    "QGC": (0.025, 0.7, "quadratic", 0.6, 5),
     "GSP": (0.035, 0.7, "quadratic", 0.6, 5),
     "M6": (0.035, 0.7, "quadratic", 0.6, 5),
     "JNN": (0.06, 0.9, "linear", 0.6, 5),
