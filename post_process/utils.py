@@ -25,15 +25,13 @@ def get_noise_S(S, db):
             noise_S[i, :, j] = S[i, :, j] + noise.flatten()
     return noise_S
 
-def process_result(Type, mean, ppm, var, idx_peaks, HNMR, expand=5):
+def process_result(mean, ppm, var, idx_peaks, HNMR, expand=5):
     cs_spec = np.zeros([(ppm.size), 1])
     spec_whole = np.zeros([len(mean[0, :]), ppm.size])
     cs_spec[idx_peaks, :] = HNMR
     spec_whole[0:140, idx_peaks[0, :]] = mean.T
     spec_var = np.zeros([len(mean[0, :]), ppm.size])
     spec_var[0:140, idx_peaks[0, :]] = var.T
-    expand_dict = {'M6': 20, 'QGC': 10}
-    expand = expand_dict.get(Type, expand)
     merged_boxes = find_box(spec_var, expand_margin=1, expand_margin_x=expand) 
     norm_var = normalize_matrix_with_max_values(spec_whole, spec_var, merged_boxes, cs_spec)
     max_var = calculate_difference_mean(norm_var, merged_boxes)
@@ -52,9 +50,9 @@ def load_data(type):
 
 def result_process(type):
     paraments = {
-    "QGC": (0.025, 0.7, "quadratic", 0.6, 5),
+    "QGC": (0.025, 0.7, "quadratic", 0.6, 10),
     "GSP": (0.035, 0.7, "quadratic", 0.6, 5),
-    "M6": (0.035, 0.7, "quadratic", 0.6, 5),
+    "M6": (0.035, 0.7, "quadratic", 0.6, 20),
     "JNN": (0.06, 0.9, "linear", 0.6, 5),
     "TSP": (0.05, 0.7, "linear", 0.6, 20),
     "EC": (0.03, 0.9, "linear", 0.45, 20),
