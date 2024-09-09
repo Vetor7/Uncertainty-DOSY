@@ -256,53 +256,7 @@ function contourDOSY_DL(Type, Result_DRILT, Result, HNMR, b, ppm, ...
         xlabel(t, 'Chemical Shift(ppm)');
         ylabel(t, 'Diffusion Coefficient(10^{-10}m^2/s)');
 
-   elseif Type == "QG2"
-        plot(ppm,cs_spec, "Color",'k');set(gca,'Xdir','reverse');axis off;
-        xlim([cs1,cs2]);
-
-        % Uncertanty
-        nexttile(2, [3, 1])
-        DiffCoef = [3, 4.6];
-        contour(ppm,decay_range*(0.8/b(end)),spec_whole,40);
-
-        set(gca,'Ydir','reverse','Xdir','reverse'); 
-        xlim([cs1,cs2]);
-        ylim([dc1,dc2]);
-        text(7, 3.0, "quinine", FontSize=8, Color=[1, 0.07, 0.07])
-        text(7, 4.9, "geraniol", FontSize=8, Color=[1, 0.07, 0.07])
-
-        for i = 1:length(DiffCoef)
-            l = line(gca,get(gca,'xlim'),DiffCoef(i)*ones(1,2),'LineWidth',0.8,'color',[0.85 0.85 0.85],'LineStyle','--');
-            uistack(l, "bottom");
-        end
-        set(gca,'YTick',unique(DiffCoef) );
-
-        xlabel(t, 'Chemical Shift(ppm)');
-        ylabel(t, 'Diffusion Coefficient(10^{-10}m^2/s)');
-
    elseif Type == "JNN"
-        plot(ppm,cs_spec, "Color",'k');set(gca,'Xdir','reverse');axis off;
-        xlim([cs1,cs2]);
-
-        % Uncertanty
-        nexttile(2, [3, 1])
-        DiffCoef = [4.8, 6.0,9.1, 12.1];
-        contour(ppm,decay_range*(0.8/b(end)),spec_whole,40);
-
-        set(gca,'Ydir','reverse','Xdir','reverse'); 
-        xlim([cs1,cs2]);
-        ylim([dc1,dc2]);
-
-        for i = 1:length(DiffCoef)
-            l = line(gca,get(gca,'xlim'),DiffCoef(i)*ones(1,2),'LineWidth',0.8,'color',[0.85 0.85 0.85],'LineStyle','--');
-            uistack(l, "bottom");
-        end
-        set(gca,'YTick',unique(DiffCoef) );
-
-        xlabel(t, 'Chemical Shift(ppm)');
-        ylabel(t, 'Diffusion Coefficient(10^{-10}m^2/s)');
-
-   elseif Type == "JNN228"
         plot(ppm,cs_spec, "Color",'k');set(gca,'Xdir','reverse');axis off;
         xlim([cs1,cs2]);
 
