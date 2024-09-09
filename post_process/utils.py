@@ -56,8 +56,8 @@ def result_process(type):
     "JNN": (0.06, 0.9, "linear", 0.6, 5),
     "TSP": (0.05, 0.7, "linear", 0.6, 20),
     "EC": (0.03, 0.9, "linear", 0.45, 20),
-    "AMDK": (0.03, 0.9, "linear", 0.45, 10),
-    "BPP1": (0.03, 0.9, "linear", 0.6, 5),
+    "AMDK": (0.02, 0.9, "quadratic", 0.45, 10),
+    "BPP1": (0.03, 0.9, "linear", 0.9, 5),
     "BPP2": (0.03, 0.9, "linear", 0.6, 0),
     "QG": (0.06, 0.9, "linear", 0.5, 5),
 }
