@@ -77,7 +77,7 @@ def normalize_matrix_with_max_values(matrix1, matrix2, bounding_boxes, HNMR):
             normalized_values = box_values2 / max_value
         else:
             normalized_values = box_values2 / Lmax_value
-            normalized_values = np.where(normalized_values > 0.5, 1, 0)
+            normalized_values = np.where(normalized_values > 0.7, 1, 0)
         
         normalized_matrix2[y1:y2+1, x1:x2+1] = normalized_values
     
