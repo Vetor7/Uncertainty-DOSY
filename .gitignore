@@ -1,0 +1,5 @@
+# Default ignored files
+lightning_logs/
+__pycache__/
+Dataset/*.npy
+.idea
