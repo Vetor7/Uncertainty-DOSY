@@ -1,7 +1,7 @@
 import os
 
 # model
-Type = os.getenv('TYPE', 'T1T2') 
+Type = os.getenv('TYPE', 'DOSY') 
 n_layers = 10
 n_heads = 7
 lr = 1e-3
