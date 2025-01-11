@@ -1,57 +1,58 @@
-# High-Confidence Reconstruction for Laplace NMR Based on Uncertainty-Informed Deep Learning
+# High-Confidence Reconstruction for Laplace NMR with Uncertainty-Aware Deep Learning
 
-## Overview
-Laplace NMR is a powerful technique for probing molecular dynamics and spin interactions by measuring relaxation and diffusion parameters, complementing the chemical resolution of Fourier NMR. However, accurately reconstructing spectra with precise diffusion coefficients or relaxation times is challenging due to the ill-posed nature of the inverse Laplace Transform. Existing methods often produce inconsistent results, making it difficult to assess the reliability of the estimations.
+# Overview
+Laplace NMR is a powerful technique for investigating molecular dynamics and spin interactions through the measurement of relaxation time or diffusion coefficients. However, existing processing methods generally yield varying results due to the ill-posed nature of inverse Laplace Transform, making it difficult for the user to discern which parts of the estimation are accurate or which method is more reliable due to the lack of ideal references in practical applications.
 
-To address these challenges, we developed a deep learning-based approach that:
-- Accurately recovers parameter distributions from exponential signals.
-- Provides uncertainty estimates for each reconstruction, enabling confidence assessment across different spectral regions.
+This repository presents a deep learning-based approach that:
+- **Accurately recovers** parameter distributions from exponential signals.
+- **Provides uncertainty estimates** for each reconstruction, helping you assess confidence at every point in the spectrum.
 
-This uncertainty-informed framework enhances the reliability of Laplace NMR interpretations, offering a clearer and more dependable analysis. Our method facilitates broader applications in fields such as chemistry and materials science by providing a more robust and trustworthy tool for researchers.
+By integrating uncertainty into the analysis, our method enhances the reliability of Laplace NMR interpretations and broadens its application in chemistry and materials science.
 
-## Table of Contents
-
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Training](#training)
-    - [Default Training (Type: 'DOSY')](#default-training-type-dosy)
-    - [Custom Training (Type: 'T1T2')](#custom-training-type-t1t2)
-  - [Evaluation](#evaluation)
-  - [Testing](#testing)
-- [Configuration](#configuration)
-- [Project Structure](#project-structure)
+# Table of Contents
+- [Requirements](#requirements)  
+- [Usage](#usage)  
+  - [Training](#training)  
+    - [Default Training (Type: 'DOSY')](#default-training-type-dosy)  
+    - [Custom Training (Type: 'T1T2')](#custom-training-type-t1t2)  
+  - [Testing](#testing)  
+- [Visualization](#visualization)  
 - [Contact](#contact)
-- [License](#license)
 
-## Requirements
+# Requirements
+To manage the environment, make sure you have [Conda](https://docs.conda.io/en/latest/) installed.
 
-Ensure you have [Conda](https://docs.conda.io/en/latest/) installed for environment management.
-
-```shell
+```bash
 sh script/env.sh
 conda activate DOSY
 ```
-
-## Usage
-### Training
-Run the training script. By default, the Type is set to 'DOSY' for diffusion experiments. To use 'T1T2' for relaxation experiments, pass it as an argument.
-#### Default Training (Type: 'DOSY')
+# Usage
+## Training
+By default, the training script is configured for diffusion experiments (Type: 'DOSY').
+To switch to relaxation experiments (Type: 'T1T2'), simply pass it as a parameter.
+## Default Training (Type: 'DOSY')
 ```shell
 sh script/train.sh
 ```
-#### Custom Training (Type: 'T1T2')
+## Custom Training (Type: 'T1T2')
 ```shell
 sh script/train.sh T1T2
 ```
-Notes:
+### Notes:
 - The train.sh script accepts an optional parameter to set the Type. If no parameter is provided, it defaults to 'DOSY'.
 - The Type parameter adjusts various configuration settings in config.py to suit different model architectures and dataset configurations.
 
-### Testing
-Use the provided Jupyter Notebook to test the trained model's performance and reliability:
+## Testing
+Use the provided Jupyter Notebook to evaluate the performance and reliability of the trained model:
 - Testing Script: test.ipynb
 
+# Visualization
+For further analysis and visual confirmation, MATLAB scripts are provided in:
+- MATLAB/Results_Graph_CMP.mlx : Visualizes the results of the comparative
+- MATLAB/Results_Graph_SPL.mlx : Visualizes the results of the additional experiments.
+
+These MATLAB files generate result plots of the data processed by the trained model.
+
 ## Contact
-If you have any questions, please contact us via email at 1015149201@qq.com or through GitHub Issues. Pull requests are highly welcomed!
+For questions, please reach out via email or open a GitHub Issue. Pull requests are always welcome!
 
