@@ -48,7 +48,7 @@ Use the provided Jupyter Notebook to evaluate the performance and reliability of
 
 # Visualization
 For further analysis and visual confirmation, MATLAB scripts are provided in:
-- MATLAB/Results_Graph_CMP.mlx : Visualizes the results of the comparative
+- MATLAB/Results_Graph_CMP.mlx : Visualizes the results of the comparative.
 - MATLAB/Results_Graph_SPL.mlx : Visualizes the results of the additional experiments.
 
 These MATLAB files generate result plots of the data processed by the trained model.
