@@ -1,7 +1,7 @@
 # High-Confidence Reconstruction for Laplace NMR with Uncertainty-Aware Deep Learning
 
 # Overview
-Laplace NMR is a powerful technique for investigating molecular dynamics and spin interactions through the measurement of relaxation time or diffusion coefficients. However, existing processing methods generally yield varying results due to the ill-posed nature of inverse Laplace Transform, making it difficult for the user to discern which parts of the estimation are accurate or which method is more reliable due to the lack of ideal references in practical applications.
+Laplace NMR presents a powerful detection technique for providing detailed insights into molecular dynamics and spin interactions by measuring relaxation and diffusion parameters, offering complementary chemical resolution to Fourier NMR. Spectrum reconstruction with accurate diffusion coefficients or relaxation time is essential for the Laplace NMR performance, but existing processing methods generally yield varying results due to the ill-posed nature of inverse Laplace Transform, making it difficult for the user to discern which parts of the estimation are accurate or which method is more reliable due to the lack of ideal references in practical applications.
 
 This repository presents a deep learning-based approach that:
 - **Accurately recovers** parameter distributions from exponential signals.
