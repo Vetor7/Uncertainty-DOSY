@@ -70,5 +70,5 @@ For further analysis and visual confirmation, MATLAB scripts are provided in:
 These MATLAB files generate result plots of the data processed by the trained model.
 
 ## Contact
-For questions, please reach out via email or open a GitHub Issue. Pull requests are always welcome!
+For questions, please reach out via email((33320231150340@stu.xmu.edu.cn)) or open a GitHub Issue. Pull requests are always welcome!
 
