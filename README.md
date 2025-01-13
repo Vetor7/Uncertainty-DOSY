@@ -16,6 +16,9 @@ By integrating uncertainty into the analysis, our method enhances the reliabilit
     - [Default Training (Type: 'DOSY')](#default-training-type-dosy)  
     - [Custom Training (Type: 'T1T2')](#custom-training-type-t1t2)  
   - [Testing](#testing)  
+- [Pre-trained Model Weights](#pre-trained-model-weights)
+  - [Download Link](#download-link)
+  - [Usage Guide](#usage-guide)
 - [Visualization](#visualization)  
 - [Contact](#contact)
 
@@ -45,6 +48,19 @@ sh script/train.sh T1T2
 ## Testing
 Use the provided Jupyter Notebook to evaluate the performance and reliability of the trained model:
 - Testing Script: test.ipynb
+
+# Pre-trained Model
+## Download Link
+We have provided pre-trained model weights to help you get started quickly. You can download the weights from our Google Drive folder using the link below:
+
+[Download Pre-trained Weights](https://drive.google.com/drive/folders/1VEujZzFJZK7Nz4e7IaoWOnyyWYzn-vYO?usp=sharing)
+
+## Usage Guide
+### 1. Download the Weights
+Click the link above to access and download the pre-trained weight files to your local machine.
+
+### 2. Place the Weights
+Move the downloaded weight files to the designated directory in the project, specifically the Result/ directory.
 
 # Visualization
 For further analysis and visual confirmation, MATLAB scripts are provided in:
